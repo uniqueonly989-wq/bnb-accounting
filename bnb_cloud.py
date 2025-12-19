@@ -44,10 +44,10 @@ with st.sidebar.form("entry_form", clear_on_submit=True):
     submitted = st.form_submit_button("儲存紀錄")
     
     if submitted:
-        # 1. 讀取最新資料
+        # 1. 讀取目前資料
         current_df = load_data()
         
-        # 2. 準備新的一筆資料
+        # 2. 建立新的一筆資料
         new_row = pd.DataFrame([{
             '日期': date_input.strftime('%Y-%m-%d'),
             '類型': entry_type,
@@ -58,12 +58,14 @@ with st.sidebar.form("entry_form", clear_on_submit=True):
         
         # 3. 合併並寫回 Google Sheets
         updated_df = pd.concat([current_df, new_row], ignore_index=True)
-        # 格式化日期以免寫入錯誤
-        updated_df['日期'] = updated_df['日期'].dt.strftime('%Y-%m-%d')
+        
+        # --- 關鍵修正：先轉成日期格式，再轉成文字格式 ---
+        updated_df['日期'] = pd.to_datetime(updated_df['日期']).dt.strftime('%Y-%m-%d')
         
         conn.update(spreadsheet=SPREADSHEET_URL, data=updated_df)
-        st.sidebar.success("✅ 已儲存到 Google 試算表！")
-        # 強制重新整理頁面以顯示新資料
+        st.sidebar.success("✅ 已新增至 Google 試算表！")
+        
+        # 強制重新整理以顯示新資料
         st.rerun()
 
 # --- 主畫面：顯示報表 ---
